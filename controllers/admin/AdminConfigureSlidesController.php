@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -31,10 +33,11 @@ class AdminConfigureSlidesController extends ModuleAdminController
         // Get slides and update their position
         $slides = Tools::getValue('slides');
         foreach ($slides as $position => $id_slide) {
-            Db::getInstance()->execute('
+            Db::getInstance()->execute(
+                '
 					UPDATE `' . _DB_PREFIX_ . 'homeslider_slides` SET `position` = ' . (int) $position . '
 					WHERE `id_homeslider_slides` = ' . (int) $id_slide
-                );
+            );
         }
 
         // Wipe module cache

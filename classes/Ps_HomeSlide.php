@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -54,7 +56,8 @@ class Ps_HomeSlide extends ObjectModel
         $id_shop = $context->shop->id;
 
         $res = parent::add($autodate, $null_values);
-        $res &= Db::getInstance()->execute('
+        $res &= Db::getInstance()->execute(
+            '
 			INSERT INTO `' . _DB_PREFIX_ . 'homeslider` (`id_shop`, `id_homeslider_slides`)
 			VALUES(' . (int) $id_shop . ', ' . (int) $this->id . ')'
         );
@@ -82,7 +85,8 @@ class Ps_HomeSlide extends ObjectModel
 
         $res &= $this->reOrderPositions();
 
-        $res &= Db::getInstance()->execute('
+        $res &= Db::getInstance()->execute(
+            '
 			DELETE FROM `' . _DB_PREFIX_ . 'homeslider`
 			WHERE `id_homeslider_slides` = ' . (int) $this->id
         );
@@ -98,7 +102,8 @@ class Ps_HomeSlide extends ObjectModel
         $context = Context::getContext();
         $id_shop = $context->shop->id;
 
-        $max = Db::getInstance((bool) _PS_USE_SQL_SLAVE_)->executeS('
+        $max = Db::getInstance((bool) _PS_USE_SQL_SLAVE_)->executeS(
+            '
 			SELECT MAX(hss.`position`) as position
 			FROM `' . _DB_PREFIX_ . 'homeslider_slides` hss, `' . _DB_PREFIX_ . 'homeslider` hs
 			WHERE hss.`id_homeslider_slides` = hs.`id_homeslider_slides` AND hs.`id_shop` = ' . (int) $id_shop
@@ -108,7 +113,8 @@ class Ps_HomeSlide extends ObjectModel
             return true;
         }
 
-        $rows = Db::getInstance((bool) _PS_USE_SQL_SLAVE_)->executeS('
+        $rows = Db::getInstance((bool) _PS_USE_SQL_SLAVE_)->executeS(
+            '
 			SELECT hss.`position` as position, hss.`id_homeslider_slides` as id_slide
 			FROM `' . _DB_PREFIX_ . 'homeslider_slides` hss
 			LEFT JOIN `' . _DB_PREFIX_ . 'homeslider` hs ON (hss.`id_homeslider_slides` = hs.`id_homeslider_slides`)
@@ -127,7 +133,8 @@ class Ps_HomeSlide extends ObjectModel
 
     public static function getAssociatedIdsShop($id_slide)
     {
-        $result = Db::getInstance((bool) _PS_USE_SQL_SLAVE_)->executeS('
+        $result = Db::getInstance((bool) _PS_USE_SQL_SLAVE_)->executeS(
+            '
 			SELECT hs.`id_shop`
 			FROM `' . _DB_PREFIX_ . 'homeslider` hs
 			WHERE hs.`id_homeslider_slides` = ' . (int) $id_slide

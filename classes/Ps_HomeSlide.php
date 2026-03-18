@@ -68,11 +68,16 @@ class Ps_HomeSlide extends ObjectModel
 
         $images = $this->image;
         foreach ($images as $image) {
-            if (preg_match('/sample/', $image) === 0) {
-                if ($image && file_exists(__DIR__ . '/images/' . $image)) {
-                    $res &= @unlink(__DIR__ . '/images/' . $image);
-                }
+            if (preg_match('/sample/', $image) !== 0) {
+                continue;
             }
+            if (!$image) {
+                continue;
+            }
+            if (!file_exists(__DIR__ . '/images/' . $image)) {
+                continue;
+            }
+            $res &= @unlink(__DIR__ . '/images/' . $image);
         }
 
         $res &= $this->reOrderPositions();

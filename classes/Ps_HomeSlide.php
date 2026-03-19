@@ -77,10 +77,10 @@ class Ps_HomeSlide extends ObjectModel
             if (!$image) {
                 continue;
             }
-            if (!file_exists(__DIR__ . '/images/' . $image)) {
+            if (!file_exists(__DIR__ . '/images/' . basename($image))) {
                 continue;
             }
-            $res &= @unlink(__DIR__ . '/images/' . $image);
+            $res &= @unlink(__DIR__ . '/images/' . basename($image));
         }
 
         $res &= $this->reOrderPositions();

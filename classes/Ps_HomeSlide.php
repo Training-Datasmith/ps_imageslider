@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -19,7 +19,7 @@ declare(strict_types=1);
  * @copyright Since 2007 PrestaShop SA and Contributors
  * @license   https://opensource.org/licenses/AFL-3.0 Academic Free License version 3.0
  */
-class Ps_HomeSlide extends ObjectModel
+class Ps_home_Slide extends Object_Model
 {
     public $title;
     public $description;
@@ -29,46 +29,32 @@ class Ps_HomeSlide extends ObjectModel
     public $active;
     public $position;
     public $id_shop;
-
     /**
      * @see ObjectModel::$definition
      */
-    public static $definition = [
-        'table' => 'homeslider_slides',
-        'primary' => 'id_homeslider_slides',
-        'multilang' => true,
-        'fields' => [
-            'active' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool', 'required' => true],
-            'position' => ['type' => self::TYPE_INT, 'validate' => 'isunsignedInt', 'required' => true],
-
-            // Lang fields
-            'description' => ['type' => self::TYPE_HTML, 'lang' => true, 'validate' => 'isCleanHtml', 'size' => 4000],
-            'title' => ['type' => self::TYPE_STRING, 'lang' => true, 'validate' => 'isCleanHtml', 'size' => 255],
-            'legend' => ['type' => self::TYPE_STRING, 'lang' => true, 'validate' => 'isCleanHtml', 'size' => 255],
-            'url' => ['type' => self::TYPE_STRING, 'lang' => true, 'validate' => 'isUrl', 'size' => 255],
-            'image' => ['type' => self::TYPE_STRING, 'lang' => true, 'validate' => 'isCleanHtml', 'size' => 255],
-        ],
-    ];
-
+    public static $definition = ['table' => 'homeslider_slides', 'primary' => 'id_homeslider_slides', 'multilang' => true, 'fields' => [
+        'active' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool', 'required' => true],
+        'position' => ['type' => self::TYPE_INT, 'validate' => 'isunsignedInt', 'required' => true],
+        // Lang fields
+        'description' => ['type' => self::TYPE_HTML, 'lang' => true, 'validate' => 'isCleanHtml', 'size' => 4000],
+        'title' => ['type' => self::TYPE_STRING, 'lang' => true, 'validate' => 'isCleanHtml', 'size' => 255],
+        'legend' => ['type' => self::TYPE_STRING, 'lang' => true, 'validate' => 'isCleanHtml', 'size' => 255],
+        'url' => ['type' => self::TYPE_STRING, 'lang' => true, 'validate' => 'isUrl', 'size' => 255],
+        'image' => ['type' => self::TYPE_STRING, 'lang' => true, 'validate' => 'isCleanHtml', 'size' => 255],
+    ]];
     public function add($autodate = true, $null_values = false)
     {
-        $context = Context::getContext();
+        $context = Context::get_context();
         $id_shop = $context->shop->id;
-
         $res = parent::add($autodate, $null_values);
-        $res &= Db::getInstance()->execute(
-            '
+        $res &= Db::get_instance()->execute('
 			INSERT INTO `' . _DB_PREFIX_ . 'homeslider` (`id_shop`, `id_homeslider_slides`)
-			VALUES(' . (int) $id_shop . ', ' . (int) $this->id . ')'
-        );
-
+			VALUES(' . (int) $id_shop . ', ' . (int) $this->id . ')');
         return (bool) $res;
     }
-
     public function delete()
     {
         $res = true;
-
         $images = $this->image;
         foreach ($images as $image) {
             if (preg_match('/sample/', $image) !== 0) {
@@ -82,74 +68,51 @@ class Ps_HomeSlide extends ObjectModel
             }
             $res &= @unlink(__DIR__ . '/images/' . basename($image));
         }
-
-        $res &= $this->reOrderPositions();
-
-        $res &= Db::getInstance()->execute(
-            '
+        $res &= $this->re_order_positions();
+        $res &= Db::get_instance()->execute('
 			DELETE FROM `' . _DB_PREFIX_ . 'homeslider`
-			WHERE `id_homeslider_slides` = ' . (int) $this->id
-        );
-
+			WHERE `id_homeslider_slides` = ' . (int) $this->id);
         $res &= parent::delete();
-
         return (bool) $res;
     }
-
-    public function reOrderPositions()
+    public function re_order_positions()
     {
         $id_slide = $this->id;
-        $context = Context::getContext();
+        $context = Context::get_context();
         $id_shop = $context->shop->id;
-
-        $max = Db::getInstance((bool) _PS_USE_SQL_SLAVE_)->executeS(
-            '
+        $max = Db::get_instance((bool) _PS_USE_SQL_SLAVE_)->execute_s('
 			SELECT MAX(hss.`position`) as position
 			FROM `' . _DB_PREFIX_ . 'homeslider_slides` hss, `' . _DB_PREFIX_ . 'homeslider` hs
-			WHERE hss.`id_homeslider_slides` = hs.`id_homeslider_slides` AND hs.`id_shop` = ' . (int) $id_shop
-        );
-
+			WHERE hss.`id_homeslider_slides` = hs.`id_homeslider_slides` AND hs.`id_shop` = ' . (int) $id_shop);
         if ((int) $max == (int) $id_slide) {
             return true;
         }
-
-        $rows = Db::getInstance((bool) _PS_USE_SQL_SLAVE_)->executeS(
-            '
+        $rows = Db::get_instance((bool) _PS_USE_SQL_SLAVE_)->execute_s('
 			SELECT hss.`position` as position, hss.`id_homeslider_slides` as id_slide
 			FROM `' . _DB_PREFIX_ . 'homeslider_slides` hss
 			LEFT JOIN `' . _DB_PREFIX_ . 'homeslider` hs ON (hss.`id_homeslider_slides` = hs.`id_homeslider_slides`)
-			WHERE hs.`id_shop` = ' . (int) $id_shop . ' AND hss.`position` > ' . (int) $this->position
-        );
-
+			WHERE hs.`id_shop` = ' . (int) $id_shop . ' AND hss.`position` > ' . (int) $this->position);
         foreach ($rows as $row) {
-            $current_slide = new Ps_HomeSlide($row['id_slide']);
+            $current_slide = new Ps_home_Slide($row['id_slide']);
             --$current_slide->position;
             $current_slide->update();
             unset($current_slide);
         }
-
         return true;
     }
-
-    public static function getAssociatedIdsShop($id_slide)
+    public static function get_associated_ids_shop($id_slide)
     {
-        $result = Db::getInstance((bool) _PS_USE_SQL_SLAVE_)->executeS(
-            '
+        $result = Db::get_instance((bool) _PS_USE_SQL_SLAVE_)->execute_s('
 			SELECT hs.`id_shop`
 			FROM `' . _DB_PREFIX_ . 'homeslider` hs
-			WHERE hs.`id_homeslider_slides` = ' . (int) $id_slide
-        );
-
+			WHERE hs.`id_homeslider_slides` = ' . (int) $id_slide);
         if (!is_array($result)) {
             return false;
         }
-
         $return = [];
-
         foreach ($result as $id_shop) {
             $return[] = (int) $id_shop['id_shop'];
         }
-
         return $return;
     }
 }

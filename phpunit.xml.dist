@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="tests/php/bootstrap.php"
+         colors="true"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         verbose="true">
+    <testsuites>
+        <testsuite name="module-tests">
+            <file>tests/php/IndexGuardTest.php</file>
+            <file>tests/php/VersionGuardTest.php</file>
+            <file>tests/php/PsHomeSlideDefinitionTest.php</file>
+            <file>tests/php/ValidateUrlTest.php</file>
+            <file>tests/php/SlidesQueryTest.php</file>
+            <file>tests/php/WidgetVariablesTest.php</file>
+            <file>tests/php/InstallConfigTest.php</file>
+            <file>tests/php/PostValidationTest.php</file>
+            <file>tests/php/PostProcessTest.php</file>
+            <file>tests/php/DeleteReorderTest.php</file>
+            <file>tests/php/ShopDuplicationTest.php</file>
+            <file>tests/php/AdminConfigureSlidesControllerTest.php</file>
+            <file>tests/php/HeaderStatusFieldsTest.php</file>
+            <file>tests/php/UpgradeModuleTest.php</file>
+            <file>tests/php/ShopMessagesTest.php</file>
+            <file>tests/php/GetContentBranchTest.php</file>
+        </testsuite>
+    </testsuites>
+</phpunit>

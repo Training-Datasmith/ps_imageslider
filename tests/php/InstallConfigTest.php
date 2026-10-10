@@ -17,8 +17,8 @@ class InstallConfigTest extends PsImageSliderTestCase
         $hooks = $module->registeredHooks;
         sort($hooks);
         $this->assertSame(array('actionShopDataDuplication', 'displayHeader', 'displayHome'), $hooks);
-        $this->assertSame('5000', Configuration::getExact('HOMESLIDER_SPEED', null, 1));
-        $this->assertSame('1', Configuration::getExact('HOMESLIDER_PAUSE_ON_HOVER', null, 2));
+        $this->assertSame('5000', Configuration::getExact('HOMESLIDER_SPEED', 7, 1));
+        $this->assertSame('1', Configuration::getExact('HOMESLIDER_PAUSE_ON_HOVER', 7, 2));
         $this->assertSame('1', Configuration::getExact('HOMESLIDER_WRAP', 7, null));
         $this->assertSame('5000', Configuration::get('HOMESLIDER_SPEED'));
         $rows = $db->executeS('SELECT COUNT(*) AS c FROM `' . _DB_PREFIX_ . 'homeslider_slides`');

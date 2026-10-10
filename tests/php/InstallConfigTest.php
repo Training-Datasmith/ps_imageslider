@@ -9,6 +9,7 @@ class InstallConfigTest extends PsImageSliderTestCase
         $db->execute('DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'homeslider_slides_lang`');
         $db->execute('DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'homeslider_slides`');
         $db->execute('DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'homeslider`');
+        $this->assertFalse($db->getRow('SHOW TABLES LIKE "' . _DB_PREFIX_ . 'homeslider"'));
         $module = new Ps_ImageSlider();
         $this->assertTrue($module->install());
         $this->assertNotFalse($db->getRow('SHOW COLUMNS FROM `' . _DB_PREFIX_ . 'homeslider` LIKE "id_shop"'));

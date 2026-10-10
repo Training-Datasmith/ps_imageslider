@@ -25,9 +25,11 @@ RUN set -eux; \
 
 FROM --platform=linux/amd64 php@sha256:6ce95208609dc66df163ab936c970b3b34cd901b85c747102c5999f08ade9143
 COPY --from=verifier /opt/phpunit/phpunit-4.8.36.phar /opt/phpunit/phpunit-4.8.36.phar
-RUN docker-php-ext-install mysqli
+RUN docker-php-ext-install mysqli \
+    && printf 'error_reporting=-1\ndisplay_errors=1\ndisplay_startup_errors=1\n' > /usr/local/etc/php/conf.d/error-reporting.ini
 RUN set -eux; \
-    php -r 'if (PHP_VERSION !== "5.6.40") { fwrite(STDERR, "unexpected PHP version\n"); exit(1); }'; \
-    php -r 'if (!extension_loaded("mysqli")) { fwrite(STDERR, "mysqli missing\n"); exit(1); }'
+    php -d error_reporting=-1 -r 'if (PHP_VERSION !== "5.6.40") { fwrite(STDERR, "unexpected PHP version\n"); exit(1); }'; \
+    php -d error_reporting=-1 -r 'if (!extension_loaded("mysqli")) { fwrite(STDERR, "mysqli missing\n"); exit(1); }'; \
+    php -d error_reporting=-1 -r 'if (error_reporting() !== -1) { fwrite(STDERR, "error_reporting is not -1\n"); exit(1); }'
 WORKDIR /src
 ENV PHPUNIT_PHAR=/opt/phpunit/phpunit-4.8.36.phar

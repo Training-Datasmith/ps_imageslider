@@ -25,6 +25,15 @@ class PsImageSliderTestCase extends PHPUnit_Framework_TestCase
         Tools::resetRequest();
         Shop::resetState();
         Context::reset();
+        Schema::createAll();
+    }
+
+    protected function assertNoChildDiagnostics($stdout, $stderr)
+    {
+        $combined = $stdout . "\n" . $stderr;
+        foreach (array('Notice:', 'Warning:', 'Deprecated:', 'Fatal error:') as $token) {
+            $this->assertNotContains($token, $combined);
+        }
     }
 
     protected function cleanupGeneratedImages()
@@ -61,6 +70,7 @@ class PsImageSliderTestCase extends PHPUnit_Framework_TestCase
         $stderr = stream_get_contents($pipes[2]);
         fclose($pipes[2]);
         $exit = proc_close($proc);
+        $this->assertNoChildDiagnostics($stdout, $stderr);
 
         return array('exit' => $exit, 'stdout' => $stdout, 'stderr' => $stderr, 'sentinel' => $sentinel);
     }

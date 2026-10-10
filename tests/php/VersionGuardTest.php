@@ -22,14 +22,15 @@ class VersionGuardTest extends PsImageSliderTestCase
         $descriptors = array(0 => array('pipe', 'r'), 1 => array('pipe', 'w'), 2 => array('pipe', 'w'));
         $proc = proc_open($cmd, $descriptors, $pipes);
         fclose($pipes[0]);
+        $stdout = stream_get_contents($pipes[1]);
         $stderr = stream_get_contents($pipes[2]);
         fclose($pipes[1]);
         fclose($pipes[2]);
         $exit = proc_close($proc);
+        $this->assertNoChildDiagnostics($stdout, $stderr);
         $this->assertSame(0, $exit);
         $this->assertTrue(file_exists($sentinel));
         $this->assertTrue(class_exists('Ps_ImageSlider'));
-        $this->assertSame('', $stderr);
     }
 
     public function testUpgrade200ExitsWhenVersionConstantMissing()

@@ -37,7 +37,9 @@ echo "${PHPUNIT_SHA256}  ${PHPUNIT_PHAR}" | docker run -i --rm --platform linux/
 docker network inspect "$NETWORK" >/dev/null 2>&1 || docker network create "$NETWORK"
 
 if ! docker ps --format '{{.Names}}' | grep -qx "$MYSQL_NAME"; then
-  docker rm -f "$MYSQL_NAME" >/dev/null 2>&1 || true
+  if docker ps -a --format '{{.Names}}' | grep -qx "$MYSQL_NAME"; then
+    docker rm -f "$MYSQL_NAME" >/dev/null
+  fi
   docker run -d --platform linux/amd64 --name "$MYSQL_NAME" --network "$NETWORK" \
     -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=imageslider \
     "$MYSQL_IMAGE" --character-set-server=utf8 --collation-server=utf8_general_ci
@@ -53,13 +55,43 @@ until docker exec "$MYSQL_NAME" mysqladmin --silent -uroot -proot ping >/dev/nul
   sleep 1
 done
 
-ACTUAL_FILES="$(find tests/php -maxdepth 1 -name '*Test.php' | wc -l | tr -d ' ')"
-if [ "$ACTUAL_FILES" != "$EXPECTED_TEST_FILES" ]; then
-  echo "Expected ${EXPECTED_TEST_FILES} test files, found ${ACTUAL_FILES}" >&2
+EXPECTED_LIST=(
+  tests/php/AdminConfigureSlidesControllerTest.php
+  tests/php/DeleteReorderTest.php
+  tests/php/GetContentBranchTest.php
+  tests/php/HeaderStatusFieldsTest.php
+  tests/php/IndexGuardTest.php
+  tests/php/InstallConfigTest.php
+  tests/php/PostProcessTest.php
+  tests/php/PostValidationTest.php
+  tests/php/PsHomeSlideDefinitionTest.php
+  tests/php/ShopDuplicationTest.php
+  tests/php/ShopMessagesTest.php
+  tests/php/SlidesQueryTest.php
+  tests/php/UpgradeModuleTest.php
+  tests/php/ValidateUrlTest.php
+  tests/php/VersionGuardTest.php
+  tests/php/WidgetVariablesTest.php
+)
+if [ "${#EXPECTED_LIST[@]}" -ne "$EXPECTED_TEST_FILES" ]; then
+  echo "Hard-coded test file list is not ${EXPECTED_TEST_FILES}" >&2
+  exit 1
+fi
+mapfile -t ACTUAL_LIST < <(find tests/php -maxdepth 1 -name '*Test.php' | sed 's#^\./##' | sort)
+ACTUAL_JOINED="$(printf '%s\n' "${ACTUAL_LIST[@]}")"
+EXPECTED_JOINED="$(printf '%s\n' "${EXPECTED_LIST[@]}")"
+if [ "$ACTUAL_JOINED" != "$EXPECTED_JOINED" ]; then
+  echo "Test file inventory drifted" >&2
+  echo "expected:" >&2
+  printf '%s\n' "${EXPECTED_LIST[@]}" >&2
+  echo "actual:" >&2
+  printf '%s\n' "${ACTUAL_LIST[@]}" >&2
   exit 1
 fi
 
 run_phpunit() {
+  local config="$1"
+  local log="$ROOT/build/phpunit-last.log"
   docker run --rm --platform linux/amd64 --network "container:${MYSQL_NAME}" \
     -v "$ROOT:/src" -w /src \
     -e PS_DB_HOST=127.0.0.1 \
@@ -67,13 +99,34 @@ run_phpunit() {
     -e PS_DB_PASSWORD=root \
     -e PS_DB_NAME=imageslider \
     "$TEST_IMAGE" \
-    php -d error_reporting=-1 "$PHPUNIT_PHAR" -c /src/phpunit.xml.dist --log-junit /src/build/junit.xml "$@"
+    php -d error_reporting=-1 "$PHPUNIT_PHAR" -c "$config" --log-junit /src/build/junit.xml | tee "$log"
+  if grep -E 'Skipped:|Incomplete:' "$log"; then
+    echo "Skipped or incomplete tests are not allowed" >&2
+    exit 1
+  fi
 }
 
-run_phpunit
+write_order_config() {
+  local outfile="$1"
+  shift
+  {
+    echo '<?xml version="1.0" encoding="UTF-8"?>'
+    echo '<phpunit bootstrap="/src/tests/php/bootstrap.php" colors="true" convertErrorsToExceptions="true" convertNoticesToExceptions="true" convertWarningsToExceptions="true">'
+    echo '  <testsuites>'
+    echo '    <testsuite name="module-tests">'
+    for file in "$@"; do
+      echo "      <file>/src/${file}</file>"
+    done
+    echo '    </testsuite>'
+    echo '  </testsuites>'
+    echo '</phpunit>'
+  } > "$outfile"
+}
+
+run_phpunit /src/phpunit.xml.dist
 assert_junit_count "$JUNIT"
 
-run_phpunit
+run_phpunit /src/phpunit.xml.dist
 assert_junit_count "$JUNIT"
 
 ORDER_FILE="$ROOT/build/order.php"
@@ -107,11 +160,21 @@ foreach ($shuffled as $file) {
 PHP
 
 mapfile -t SHUFFLED1 < <(docker run --rm --platform linux/amd64 -v "$ROOT:/src" -w /src "$TEST_IMAGE" php -d error_reporting=-1 /src/build/order.php)
-run_phpunit "${SHUFFLED1[@]}"
+if [ "${#SHUFFLED1[@]}" -ne "$EXPECTED_TEST_FILES" ]; then
+  echo "Shuffle 1 did not return ${EXPECTED_TEST_FILES} files" >&2
+  exit 1
+fi
+write_order_config "$ROOT/build/phpunit-shuffle.xml" "${SHUFFLED1[@]}"
+run_phpunit /src/build/phpunit-shuffle.xml
 assert_junit_count "$JUNIT"
 
 mapfile -t SHUFFLED2 < <(docker run --rm --platform linux/amd64 -v "$ROOT:/src" -w /src "$TEST_IMAGE" php -d error_reporting=-1 /src/build/order.php)
-run_phpunit "${SHUFFLED2[@]}"
+if [ "${#SHUFFLED2[@]}" -ne "$EXPECTED_TEST_FILES" ]; then
+  echo "Shuffle 2 did not return ${EXPECTED_TEST_FILES} files" >&2
+  exit 1
+fi
+write_order_config "$ROOT/build/phpunit-shuffle.xml" "${SHUFFLED2[@]}"
+run_phpunit /src/build/phpunit-shuffle.xml
 assert_junit_count "$JUNIT"
 
 if [ "${RUN_MUTATION:-}" = "1" ]; then

@@ -26,6 +26,7 @@ class AdminConfigureSlidesControllerTest extends PsImageSliderTestCase
         $stderr = stream_get_contents($pipes[2]);
         fclose($pipes[2]);
         $exit = proc_close($proc);
+        $this->assertNoChildDiagnostics($stdout, $stderr);
         $markerContents = file_exists($marker) ? file_get_contents($marker) : '';
 
         return array('exit' => $exit, 'stdout' => $stdout, 'stderr' => $stderr, 'marker' => $markerContents);

@@ -341,7 +341,7 @@ class Ps_ImageSlider extends Module implements WidgetInterface
             }
             /* If edit : checks id_slide */
             if (Tools::isSubmit('id_slide')) {
-                if (!Validate::isInt(Tools::getValue('id_slide')) && !$this->slideExists(Tools::getValue('id_slide'))) {
+                if (!Validate::isInt(Tools::getValue('id_slide')) || !$this->slideExists(Tools::getValue('id_slide'))) {
                     $errors[] = $this->trans('Invalid slide ID', [], 'Modules.Imageslider.Admin');
                 }
             }

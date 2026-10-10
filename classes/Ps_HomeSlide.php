@@ -69,8 +69,8 @@ class Ps_HomeSlide extends ObjectModel
         $images = $this->image;
         foreach ($images as $image) {
             if (preg_match('/sample/', $image) === 0) {
-                if ($image && file_exists(__DIR__ . '/images/' . $image)) {
-                    $res &= @unlink(__DIR__ . '/images/' . $image);
+                if ($image && file_exists(dirname(__DIR__) . '/images/' . $image)) {
+                    $res &= @unlink(dirname(__DIR__) . '/images/' . $image);
                 }
             }
         }
@@ -89,19 +89,8 @@ class Ps_HomeSlide extends ObjectModel
 
     public function reOrderPositions()
     {
-        $id_slide = $this->id;
         $context = Context::getContext();
         $id_shop = $context->shop->id;
-
-        $max = Db::getInstance((bool) _PS_USE_SQL_SLAVE_)->executeS('
-			SELECT MAX(hss.`position`) as position
-			FROM `' . _DB_PREFIX_ . 'homeslider_slides` hss, `' . _DB_PREFIX_ . 'homeslider` hs
-			WHERE hss.`id_homeslider_slides` = hs.`id_homeslider_slides` AND hs.`id_shop` = ' . (int) $id_shop
-        );
-
-        if ((int) $max == (int) $id_slide) {
-            return true;
-        }
 
         $rows = Db::getInstance((bool) _PS_USE_SQL_SLAVE_)->executeS('
 			SELECT hss.`position` as position, hss.`id_homeslider_slides` as id_slide

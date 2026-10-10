@@ -2,6 +2,8 @@
 
 class PsImageSliderTestCase extends PHPUnit_Framework_TestCase
 {
+    private static $sample1Backup = null;
+
     protected function setUp()
     {
         error_reporting(-1);
@@ -15,12 +17,14 @@ class PsImageSliderTestCase extends PHPUnit_Framework_TestCase
         Shop::resetState();
         Context::reset();
         Tools::resetRequest();
+        $this->ensureSample1Backup();
         $this->cleanupGeneratedImages();
     }
 
     protected function tearDown()
     {
         $this->cleanupGeneratedImages();
+        $this->restoreSample1();
         Db::$executeSOverride = null;
         Tools::resetRequest();
         Shop::resetState();
@@ -31,8 +35,24 @@ class PsImageSliderTestCase extends PHPUnit_Framework_TestCase
     protected function assertNoChildDiagnostics($stdout, $stderr)
     {
         $combined = $stdout . "\n" . $stderr;
-        foreach (array('Notice:', 'Warning:', 'Deprecated:', 'Fatal error:') as $token) {
-            $this->assertNotContains($token, $combined);
+        $this->assertFalse(
+            (bool) preg_match('/(notice|warning|deprecated|strict standards|parse error|fatal error):/i', $combined),
+            'Child process emitted a PHP diagnostic: ' . $combined
+        );
+    }
+
+    protected function ensureSample1Backup()
+    {
+        $path = _PS_MODULE_DIR_ . 'images/sample-1.jpg';
+        if (null === self::$sample1Backup && is_readable($path)) {
+            self::$sample1Backup = file_get_contents($path);
+        }
+    }
+
+    protected function restoreSample1()
+    {
+        if (null !== self::$sample1Backup) {
+            file_put_contents(_PS_MODULE_DIR_ . 'images/sample-1.jpg', self::$sample1Backup);
         }
     }
 
@@ -51,7 +71,7 @@ class PsImageSliderTestCase extends PHPUnit_Framework_TestCase
         return new TestablePs_ImageSlider();
     }
 
-    protected function runIncludeWrapper($target, $defineVersion, $loadStubs)
+    protected function runIncludeWrapper($target, $defineVersion)
     {
         $sentinel = tempnam(sys_get_temp_dir(), 'idxsent');
         if (file_exists($sentinel)) {
@@ -60,7 +80,7 @@ class PsImageSliderTestCase extends PHPUnit_Framework_TestCase
         $wrapper = __DIR__ . '/../include_wrapper.php';
         $cmd = escapeshellarg(PHP_BINARY) . ' -d error_reporting=-1 ' . escapeshellarg($wrapper) . ' '
             . escapeshellarg($target) . ' ' . escapeshellarg($sentinel) . ' '
-            . ($defineVersion ? '1' : '0') . ' ' . ($loadStubs ? '1' : '0');
+            . ($defineVersion ? '1' : '0');
         $descriptors = array(0 => array('pipe', 'r'), 1 => array('pipe', 'w'), 2 => array('pipe', 'w'));
         $proc = proc_open($cmd, $descriptors, $pipes);
         $this->assertTrue(is_resource($proc));

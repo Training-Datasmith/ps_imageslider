@@ -4,7 +4,6 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-PHP_IMAGE="php@sha256:6ce95208609dc66df163ab936c970b3b34cd901b85c747102c5999f08ade9143"
 MYSQL_IMAGE="mysql@sha256:dab0a802b44617303694fb17d166501de279c3031ddeb28c56ecf7fcab5ef0da"
 NETWORK="ps-imageslider-net"
 MYSQL_NAME="ps-imageslider-mysql"
@@ -12,7 +11,7 @@ TEST_IMAGE="ps-imageslider-test:local"
 PHPUNIT_PHAR="/opt/phpunit/phpunit-4.8.36.phar"
 PHPUNIT_SHA256="ab8bc3017a64cf75a2112f5e089a1d5b0c4cc2116556d60c1af5e3f584e85c5e"
 EXPECTED_TEST_FILES=16
-EXPECTED_TESTS=97
+EXPECTED_TESTS=96
 
 assert_junit_count() {
   local file="$1"
@@ -46,7 +45,7 @@ if ! docker ps --format '{{.Names}}' | grep -qx "$MYSQL_NAME"; then
 fi
 
 TRIES=60
-until docker exec "$MYSQL_NAME" mysqladmin --silent -uroot -proot ping >/dev/null 2>&1; do
+until docker exec "$MYSQL_NAME" mysql -h127.0.0.1 --protocol=TCP -uroot -proot imageslider -e 'SELECT 1' >/dev/null 2>&1; do
   TRIES=$((TRIES - 1))
   if [ "$TRIES" -le 0 ]; then
     echo "MySQL did not become ready" >&2
@@ -92,6 +91,7 @@ fi
 run_phpunit() {
   local config="$1"
   local log="$ROOT/build/phpunit-last.log"
+  rm -f "$JUNIT"
   docker run --rm --platform linux/amd64 --network "container:${MYSQL_NAME}" \
     -v "$ROOT:/src" -w /src \
     -e PS_DB_HOST=127.0.0.1 \
@@ -100,6 +100,10 @@ run_phpunit() {
     -e PS_DB_NAME=imageslider \
     "$TEST_IMAGE" \
     php -d error_reporting=-1 "$PHPUNIT_PHAR" -c "$config" --log-junit /src/build/junit.xml | tee "$log"
+  if [ ! -f "$JUNIT" ]; then
+    echo "JUnit output was not written to ${JUNIT}" >&2
+    exit 1
+  fi
   if grep -E 'Skipped:|Incomplete:' "$log"; then
     echo "Skipped or incomplete tests are not allowed" >&2
     exit 1

@@ -19,11 +19,6 @@ class UpgradeSpyModule extends Ps_ImageSlider
 
         return $this->registerResult;
     }
-
-    public function installTab()
-    {
-        return parent::installTab();
-    }
 }
 
 class UpgradeModuleTest extends PsImageSliderTestCase

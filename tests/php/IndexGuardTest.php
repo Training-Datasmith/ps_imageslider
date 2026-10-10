@@ -23,15 +23,12 @@ class IndexGuardTest extends PsImageSliderTestCase
     public function testDirectoryIndexScriptsExitBeforeSentinel()
     {
         $root = _PS_MODULE_DIR_;
-        $found = array();
         foreach (self::$indexFiles as $rel) {
             $this->assertFileExists($root . $rel);
-            $found[] = $rel;
         }
-        $this->assertSame(self::$indexFiles, $found);
 
         foreach (self::$indexFiles as $rel) {
-            $result = $this->runIncludeWrapper($root . $rel, false, false);
+            $result = $this->runIncludeWrapper($root . $rel, false);
             $this->assertSame(0, $result['exit']);
             $this->assertFalse(file_exists($result['sentinel']));
             $this->assertNotContains('SENTINEL_AFTER', $result['stdout'] . $result['stderr']);

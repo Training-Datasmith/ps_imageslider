@@ -5,18 +5,21 @@ class InstallConfigTest extends PsImageSliderTestCase
     public function testInstallCreatesTablesHooksDefaultsAndSamples()
     {
         Shop::setContext(Shop::CONTEXT_ALL);
+        $db = Db::getInstance();
+        $db->execute('DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'homeslider_slides_lang`');
+        $db->execute('DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'homeslider_slides`');
+        $db->execute('DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'homeslider`');
         $module = new Ps_ImageSlider();
         $this->assertTrue($module->install());
-        $db = Db::getInstance();
         $this->assertNotFalse($db->getRow('SHOW COLUMNS FROM `' . _DB_PREFIX_ . 'homeslider` LIKE "id_shop"'));
         $this->assertNotFalse($db->getRow('SHOW COLUMNS FROM `' . _DB_PREFIX_ . 'homeslider_slides` LIKE "position"'));
         $this->assertNotFalse($db->getRow('SHOW COLUMNS FROM `' . _DB_PREFIX_ . 'homeslider_slides_lang` LIKE "image"'));
         $hooks = $module->registeredHooks;
         sort($hooks);
         $this->assertSame(array('actionShopDataDuplication', 'displayHeader', 'displayHome'), $hooks);
-        $this->assertSame('5000', Configuration::get('HOMESLIDER_SPEED', null, null, 1));
-        $this->assertSame('1', Configuration::get('HOMESLIDER_PAUSE_ON_HOVER', null, null, 2));
-        $this->assertSame('1', Configuration::get('HOMESLIDER_WRAP', null, 7, null));
+        $this->assertSame('5000', Configuration::getExact('HOMESLIDER_SPEED', null, 1));
+        $this->assertSame('1', Configuration::getExact('HOMESLIDER_PAUSE_ON_HOVER', null, 2));
+        $this->assertSame('1', Configuration::getExact('HOMESLIDER_WRAP', 7, null));
         $this->assertSame('5000', Configuration::get('HOMESLIDER_SPEED'));
         $rows = $db->executeS('SELECT COUNT(*) AS c FROM `' . _DB_PREFIX_ . 'homeslider_slides`');
         $this->assertSame(3, (int) $rows[0]['c']);
@@ -81,6 +84,7 @@ class InstallConfigTest extends PsImageSliderTestCase
     {
         $module = new Ps_ImageSlider();
         $module->install();
+        $this->assertGreaterThan(0, Tab::getIdFromClassName('AdminConfigureSlides'));
         $this->assertTrue($module->uninstall());
         $db = Db::getInstance();
         $this->assertFalse($db->getRow('SHOW TABLES LIKE "' . _DB_PREFIX_ . 'homeslider"'));

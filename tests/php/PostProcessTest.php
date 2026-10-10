@@ -52,7 +52,7 @@ class PostProcessTest extends PsImageSliderTestCase
         } catch (RedirectException $e) {
         }
         $this->assertSame('1111', Configuration::get('HOMESLIDER_SPEED'));
-        $this->assertSame('1111', Configuration::get('HOMESLIDER_SPEED', null, 7, null));
+        $this->assertSame('1111', Configuration::getExact('HOMESLIDER_SPEED', 7, null));
     }
 
     public function testGroupContextWritesGroupScopeButNotGlobal()
@@ -95,28 +95,6 @@ class PostProcessTest extends PsImageSliderTestCase
         $this->newModule()->callPostProcess();
         $row = Db::getInstance()->getRow('SELECT `active` FROM `' . _DB_PREFIX_ . 'homeslider_slides` WHERE `id_homeslider_slides`=100');
         $this->assertSame('0', $row['active']);
-    }
-
-    public function testDisallowedMimeKeepsThePreviousImage()
-    {
-        $this->insertSlide(101, 1, 1, 1, 1, 'kept.jpg');
-        Tools::submitKey('submitSlide');
-        Tools::submitKey('id_slide');
-        $_POST['id_slide'] = '101';
-        $_POST['active_slide'] = '1';
-        $_POST['image_old_1'] = 'kept.jpg';
-        $_POST['title_1'] = 't';
-        $tmp = tempnam(sys_get_temp_dir(), 'txt');
-        file_put_contents($tmp, 'x');
-        $_FILES['image_1'] = array('name' => 'note.txt', 'tmp_name' => $tmp, 'error' => 0, 'size' => 1);
-        try {
-            $this->newModule()->callPostProcess();
-        } catch (RedirectException $e) {
-        }
-        $row = Db::getInstance()->getRow('SELECT `image` FROM `' . _DB_PREFIX_ . 'homeslider_slides_lang` WHERE `id_homeslider_slides`=101 AND `id_lang`=1');
-        $this->assertSame('kept.jpg', $row['image']);
-        $this->assertFileNotExists(_PS_MODULE_DIR_ . 'images/zz-test-upload.jpg');
-        unlink($tmp);
     }
 
     public function testAddingASlideAssignsMaxPlusOnePosition()

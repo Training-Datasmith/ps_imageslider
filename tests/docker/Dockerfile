@@ -18,7 +18,7 @@ RUN set -eux; \
     fpr="$(gpg --batch --with-colons --import-options show-only --import /tmp/phpunit.key | awk -F: '$1=="fpr" && $10!=""{print toupper($10); exit}')"; \
     test "$fpr" = "$PHPUNIT_FPR"; \
     gpg --batch --status-fd 1 --verify /tmp/phpunit.phar.asc /tmp/phpunit.phar 2>&1 | tee /tmp/gpg-out; \
-    grep -q "\[GNUPG:\] VALIDSIG ${PHPUNIT_FPR} " /tmp/gpg-out; \
+    grep -q "^\\[GNUPG:\\] VALIDSIG ${PHPUNIT_FPR} " /tmp/gpg-out; \
     echo "${PHPUNIT_SHA256}  /tmp/phpunit.phar" | sha256sum -c -; \
     install -d /opt/phpunit; \
     install -m 0644 /tmp/phpunit.phar "/opt/phpunit/phpunit-${PHPUNIT_VERSION}.phar"
@@ -30,6 +30,6 @@ RUN docker-php-ext-install mysqli \
 RUN set -eux; \
     php -d error_reporting=-1 -r 'if (PHP_VERSION !== "5.6.40") { fwrite(STDERR, "unexpected PHP version\n"); exit(1); }'; \
     php -d error_reporting=-1 -r 'if (!extension_loaded("mysqli")) { fwrite(STDERR, "mysqli missing\n"); exit(1); }'; \
-    php -d error_reporting=-1 -r 'if (error_reporting() !== -1) { fwrite(STDERR, "error_reporting is not -1\n"); exit(1); }'
+    php -r 'if (error_reporting() !== -1) { fwrite(STDERR, "error_reporting is not -1\n"); exit(1); }'
 WORKDIR /src
 ENV PHPUNIT_PHAR=/opt/phpunit/phpunit-4.8.36.phar

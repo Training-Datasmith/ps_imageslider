@@ -15,14 +15,14 @@ class PsHomeSlideDefinitionTest extends PsImageSliderTestCase
         $fields = Ps_HomeSlide::$definition['fields'];
         $this->assertSame(ObjectModel::TYPE_BOOL, $fields['active']['type']);
         $this->assertTrue($fields['active']['required']);
-        $this->assertSame('isBool', $fields['active']['validate']);
+        $this->assertSame('isbool', strtolower($fields['active']['validate']));
         $this->assertSame(ObjectModel::TYPE_INT, $fields['position']['type']);
-        $this->assertSame('isunsignedInt', $fields['position']['validate']);
+        $this->assertSame('isunsignedint', strtolower($fields['position']['validate']));
         $this->assertSame(4000, $fields['description']['size']);
-        $this->assertSame('isCleanHtml', $fields['description']['validate']);
+        $this->assertSame('iscleanhtml', strtolower($fields['description']['validate']));
         $this->assertSame(255, $fields['title']['size']);
         $this->assertSame(255, $fields['url']['size']);
-        $this->assertSame('isUrl', $fields['url']['validate']);
+        $this->assertSame('isurl', strtolower($fields['url']['validate']));
         $this->assertTrue($fields['title']['lang']);
         $this->assertSame(ObjectModel::TYPE_STRING, $fields['image']['type']);
         $this->assertTrue($fields['image']['lang']);

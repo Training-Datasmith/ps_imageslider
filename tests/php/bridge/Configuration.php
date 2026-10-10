@@ -37,7 +37,7 @@ class Configuration
         return $db->execute($sql);
     }
 
-    public static function get($key, $idLang = null, $idShopGroup = null, $idShop = null)
+    public static function getExact($key, $idShopGroup = null, $idShop = null)
     {
         $db = Db::getInstance();
         $where = '`name` = "' . $db->escape($key) . '"';
@@ -53,8 +53,22 @@ class Configuration
         }
         $row = $db->getRow('SELECT `value` FROM `' . _DB_PREFIX_ . 'configuration` WHERE ' . $where . ' LIMIT 1');
         if (!$row) {
-            $row = $db->getRow('SELECT `value` FROM `' . _DB_PREFIX_ . 'configuration` WHERE `name` = "' . $db->escape($key) . '" AND `id_shop_group` IS NULL AND `id_shop` IS NULL LIMIT 1');
+            return false;
         }
+
+        return $row['value'];
+    }
+
+    public static function get($key, $idLang = null, $idShopGroup = null, $idShop = null)
+    {
+        $row = self::getExact($key, $idShopGroup, $idShop);
+        if (false !== $row) {
+            return $row;
+        }
+        $row = Db::getInstance()->getRow(
+            'SELECT `value` FROM `' . _DB_PREFIX_ . 'configuration` WHERE `name` = "'
+            . Db::getInstance()->escape($key) . '" AND `id_shop_group` IS NULL AND `id_shop` IS NULL LIMIT 1'
+        );
         if (!$row) {
             return false;
         }

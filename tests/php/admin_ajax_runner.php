@@ -24,11 +24,11 @@ class AjaxTestModule extends Ps_ImageSlider
 {
     public function clearCache()
     {
-        $marker = getenv('PS_TEST_CACHE_MARKER');
-        if ($marker) {
-            file_put_contents($marker, 'module:ps_imageslider/views/templates/hook/slider.tpl');
-        }
         parent::clearCache();
+        $marker = getenv('PS_TEST_CACHE_MARKER');
+        if ($marker && $this->lastClearedTemplate) {
+            file_put_contents($marker, $this->lastClearedTemplate);
+        }
     }
 }
 
